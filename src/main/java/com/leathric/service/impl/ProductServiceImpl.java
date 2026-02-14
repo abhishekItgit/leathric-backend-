@@ -39,6 +39,7 @@ public class ProductServiceImpl implements ProductService {
                 .name(dto.getName())
                 .description(dto.getDescription())
                 .price(dto.getPrice())
+                .imageUrl(dto.getImageUrl())
                 .stockQuantity(dto.getStockQuantity())
                 .category(category)
                 .build();
@@ -53,6 +54,7 @@ public class ProductServiceImpl implements ProductService {
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
         product.setPrice(dto.getPrice());
+        product.setImageUrl(dto.getImageUrl());
         product.setStockQuantity(dto.getStockQuantity());
         product.setCategory(findCategory(dto.getCategoryId()));
         return toDto(product);
@@ -80,6 +82,7 @@ public class ProductServiceImpl implements ProductService {
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
+                .imageUrl(product.getImageUrl())
                 .stockQuantity(product.getStockQuantity())
                 .categoryId(product.getCategory().getId())
                 .categoryName(product.getCategory().getName())
