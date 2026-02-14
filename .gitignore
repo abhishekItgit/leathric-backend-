@@ -3,3 +3,7 @@ target/
 *.iml
 *.log
 .DS_Store
+
+# Do not commit uploaded product media/binaries
+uploads/products/*
+!uploads/products/.gitkeep
