@@ -24,6 +24,8 @@ public class ProductDto {
     @DecimalMin("0.0")
     private BigDecimal price;
 
+    private String imageUrl;
+
     @NotNull
     @PositiveOrZero
     private Integer stockQuantity;
