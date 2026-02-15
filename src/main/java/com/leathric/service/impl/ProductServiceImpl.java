@@ -21,6 +21,7 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ProductDto> getAll(Pageable pageable) {
         return productRepository.findAll(pageable).map(this::toDto);
     }

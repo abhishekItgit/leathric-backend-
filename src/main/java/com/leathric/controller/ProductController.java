@@ -24,6 +24,7 @@ public class ProductController {
                 .data(productService.getAll(pageable)).build();
     }
 
+
     @GetMapping("/{id}")
     public ApiResponse<ProductDto> getById(@PathVariable Long id) {
         return ApiResponse.<ProductDto>builder().success(true).message("Product fetched")
