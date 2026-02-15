@@ -1,17 +1,18 @@
 package com.leathric.service;
 
 import com.leathric.dto.ProductDto;
+import com.leathric.dto.ProductResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface ProductService {
-    Page<ProductDto> getAll(Pageable pageable);
+    Page<ProductResponseDto> getAll(Pageable pageable);
 
-    ProductDto getById(Long id);
+    ProductResponseDto getById(Long id);
 
-    ProductDto create(ProductDto dto);
+    ProductResponseDto create(ProductDto dto);
 
-    ProductDto update(Long id, ProductDto dto);
+    ProductResponseDto update(Long id, ProductDto dto);
 
     void delete(Long id);
 }
