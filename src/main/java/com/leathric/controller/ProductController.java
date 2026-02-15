@@ -2,6 +2,7 @@ package com.leathric.controller;
 
 import com.leathric.dto.ApiResponse;
 import com.leathric.dto.ProductDto;
+import com.leathric.dto.ProductResponseDto;
 import com.leathric.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,28 +20,28 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    public ApiResponse<Page<ProductDto>> getAll(@PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-        return ApiResponse.<Page<ProductDto>>builder().success(true).message("Products fetched")
+    public ApiResponse<Page<ProductResponseDto>> getAll(@PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        return ApiResponse.<Page<ProductResponseDto>>builder().success(true).message("Products fetched")
                 .data(productService.getAll(pageable)).build();
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<ProductDto> getById(@PathVariable Long id) {
-        return ApiResponse.<ProductDto>builder().success(true).message("Product fetched")
+    public ApiResponse<ProductResponseDto> getById(@PathVariable Long id) {
+        return ApiResponse.<ProductResponseDto>builder().success(true).message("Product fetched")
                 .data(productService.getById(id)).build();
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<ProductDto> create(@Valid @RequestBody ProductDto dto) {
-        return ApiResponse.<ProductDto>builder().success(true).message("Product created")
+    public ApiResponse<ProductResponseDto> create(@Valid @RequestBody ProductDto dto) {
+        return ApiResponse.<ProductResponseDto>builder().success(true).message("Product created")
                 .data(productService.create(dto)).build();
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<ProductDto> update(@PathVariable Long id, @Valid @RequestBody ProductDto dto) {
-        return ApiResponse.<ProductDto>builder().success(true).message("Product updated")
+    public ApiResponse<ProductResponseDto> update(@PathVariable Long id, @Valid @RequestBody ProductDto dto) {
+        return ApiResponse.<ProductResponseDto>builder().success(true).message("Product updated")
                 .data(productService.update(id, dto)).build();
     }
 

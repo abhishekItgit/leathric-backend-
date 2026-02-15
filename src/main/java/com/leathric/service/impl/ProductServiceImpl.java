@@ -1,9 +1,11 @@
 package com.leathric.service.impl;
 
 import com.leathric.dto.ProductDto;
+import com.leathric.dto.ProductResponseDto;
 import com.leathric.entity.Category;
 import com.leathric.entity.Product;
 import com.leathric.exception.ResourceNotFoundException;
+import com.leathric.mapper.ProductMapper;
 import com.leathric.repository.CategoryRepository;
 import com.leathric.repository.ProductRepository;
 import com.leathric.service.ProductService;
@@ -19,73 +21,51 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductMapper productMapper;
 
     @Override
-    public Page<ProductDto> getAll(Pageable pageable) {
-        return productRepository.findAll(pageable).map(this::toDto);
+    @Transactional(readOnly = true)
+    public Page<ProductResponseDto> getAll(Pageable pageable) {
+        return productRepository.findAllProductResponses(pageable);
     }
 
     @Override
-    public ProductDto getById(Long id) {
-        return toDto(findProduct(id));
+    @Transactional(readOnly = true)
+    public ProductResponseDto getById(Long id) {
+        return productMapper.toResponseDto(findProductWithCategory(id));
     }
 
     @Override
     @Transactional
-    public ProductDto create(ProductDto dto) {
+    public ProductResponseDto create(ProductDto dto) {
         Category category = findCategory(dto.getCategoryId());
-
-        Product product = Product.builder()
-                .name(dto.getName())
-                .description(dto.getDescription())
-                .price(dto.getPrice())
-                .imageUrl(dto.getImageUrl())
-                .stockQuantity(dto.getStockQuantity())
-                .category(category)
-                .build();
-
-        return toDto(productRepository.save(product));
+        Product createdProduct = productRepository.save(productMapper.toEntity(dto, category));
+        return productMapper.toResponseDto(findProductWithCategory(createdProduct.getId()));
     }
 
     @Override
     @Transactional
-    public ProductDto update(Long id, ProductDto dto) {
-        Product product = findProduct(id);
-        product.setName(dto.getName());
-        product.setDescription(dto.getDescription());
-        product.setPrice(dto.getPrice());
-        product.setImageUrl(dto.getImageUrl());
-        product.setStockQuantity(dto.getStockQuantity());
-        product.setCategory(findCategory(dto.getCategoryId()));
-        return toDto(product);
+    public ProductResponseDto update(Long id, ProductDto dto) {
+        Product product = findProductWithCategory(id);
+        Category category = findCategory(dto.getCategoryId());
+        productMapper.updateEntity(product, dto, category);
+        return productMapper.toResponseDto(product);
     }
 
     @Override
     @Transactional
     public void delete(Long id) {
-        productRepository.delete(findProduct(id));
+        Product product = findProductWithCategory(id);
+        productRepository.delete(product);
     }
 
-    private Product findProduct(Long id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+    private Product findProductWithCategory(Long id) {
+        return productRepository.findByIdWithCategory(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found for id: " + id));
     }
 
     private Category findCategory(Long id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
-    }
-
-    private ProductDto toDto(Product product) {
-        return ProductDto.builder()
-                .id(product.getId())
-                .name(product.getName())
-                .description(product.getDescription())
-                .price(product.getPrice())
-                .imageUrl(product.getImageUrl())
-                .stockQuantity(product.getStockQuantity())
-                .categoryId(product.getCategory().getId())
-                .categoryName(product.getCategory().getName())
-                .build();
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found for id: " + id));
     }
 }
