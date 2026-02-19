@@ -12,6 +12,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
@@ -25,6 +27,14 @@ public class ProductController {
                 .data(productService.getAll(pageable)).build();
     }
 
+    @GetMapping("/trending")
+    public ApiResponse<List<ProductResponseDto>> getTrending(@RequestParam(defaultValue = "6") int limit) {
+        return ApiResponse.<List<ProductResponseDto>>builder()
+                .success(true)
+                .message("Trending products fetched")
+                .data(productService.getTrending(limit))
+                .build();
+    }
 
     @GetMapping("/{id}")
     public ApiResponse<ProductResponseDto> getById(@PathVariable Long id) {

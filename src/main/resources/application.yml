@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/leathric_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://mysql-db:3306/leathric?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root
-    password: Zxcvbnm@2026
+    password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:

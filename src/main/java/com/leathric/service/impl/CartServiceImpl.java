@@ -24,7 +24,7 @@ public class CartServiceImpl implements CartService {
     private final ProductRepository productRepository;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public CartDtos.CartResponse getCurrentUserCart() {
         return toResponse(getOrCreateUserCart());
     }
