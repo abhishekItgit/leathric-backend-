@@ -33,3 +33,7 @@ security:
 logging:
   level:
     org.hibernate.SQL: warn
+
+app:
+  storage:
+    max-file-size-bytes: 5242880
