@@ -16,7 +16,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findByIdWithCategory(@Param("id") Long id);
 
     @Query(
-            value = "SELECT new com.leathric.dto.ProductResponseDto(p.id, p.name, p.price, c.name) " +
+            value = "SELECT new com.leathric.dto.ProductResponseDto(p.id, p.name, p.price, p.imageUrl, c.name) " +
                     "FROM Product p LEFT JOIN p.category c",
             countQuery = "SELECT COUNT(p) FROM Product p"
     )

@@ -9,8 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -49,11 +51,28 @@ public class ProductController {
                 .data(productService.create(dto)).build();
     }
 
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<ProductResponseDto> createWithImage(@Valid @RequestPart("product") ProductDto dto,
+                                                           @RequestPart(value = "file", required = false) MultipartFile file) {
+        return ApiResponse.<ProductResponseDto>builder().success(true).message("Product created")
+                .data(productService.create(dto, file)).build();
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<ProductResponseDto> update(@PathVariable Long id, @Valid @RequestBody ProductDto dto) {
         return ApiResponse.<ProductResponseDto>builder().success(true).message("Product updated")
                 .data(productService.update(id, dto)).build();
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<ProductResponseDto> updateWithImage(@PathVariable Long id,
+                                                           @Valid @RequestPart("product") ProductDto dto,
+                                                           @RequestPart(value = "file", required = false) MultipartFile file) {
+        return ApiResponse.<ProductResponseDto>builder().success(true).message("Product updated")
+                .data(productService.update(id, dto, file)).build();
     }
 
     @DeleteMapping("/{id}")
