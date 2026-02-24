@@ -37,3 +37,9 @@ logging:
 app:
   storage:
     max-file-size-bytes: 5242880
+  cors:
+    allowed-origin-patterns:
+      - http://localhost:*
+      - http://127.0.0.1:*
+      - http://localhost
+
