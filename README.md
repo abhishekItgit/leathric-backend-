@@ -81,3 +81,22 @@ com.leathric
 - `POST /api/orders`
 - `GET /api/orders`
 - `PATCH /api/orders/{orderId}/status` (ADMIN)
+
+## Nginx Reverse Proxy (important)
+If you proxy backend routes under `/api/`, keep the `/api` prefix when forwarding to Spring Boot.
+
+Use:
+```nginx
+location /api/ {
+    proxy_pass http://backend:8080;
+}
+```
+
+Avoid:
+```nginx
+location /api/ {
+    proxy_pass http://backend:8080/;
+}
+```
+
+The trailing slash strips `/api` and can break mappings/security (for example `/api/categories` becoming `/categories`).
