@@ -1,9 +1,12 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/leathric_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
-    username: ${DB_USERNAME}
+    url: jdbc:mysql://database-1.c7cokmqwit9z.ap-south-1.rds.amazonaws.com:3306/leathric_db?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=60000&socketTimeout=60000    #username: ${DB_USERNAME}
+   # username: admin
+     username:${DB_USERNAME}
     password: ${DB_PASSWORD}
+   # password: Zxcvbnm2026Zxcvbnm
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -14,9 +17,11 @@ spring:
         format_sql: true
         jdbc:
           batch_size: 20
+
   jackson:
     serialization:
       write-dates-as-timestamps: false
+
   servlet:
     multipart:
       max-file-size: 10MB
