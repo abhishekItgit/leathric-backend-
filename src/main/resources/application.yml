@@ -47,3 +47,12 @@ app:
       - http://localhost:*
       - http://127.0.0.1:*
       - http://localhost
+  aws:
+    s3:
+      access-key: ${AWS_ACCESS_KEY_ID:}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:}
+      region: ${AWS_REGION:ap-south-1}
+      bucket: ${AWS_S3_BUCKET:}
+      product-image-prefix: ${AWS_S3_PRODUCT_PREFIX:products}
+      presigned-url-expiration-seconds: ${AWS_S3_PRESIGNED_EXPIRATION_SECONDS:900}
+      max-file-size-bytes: ${AWS_S3_MAX_FILE_SIZE_BYTES:5242880}
