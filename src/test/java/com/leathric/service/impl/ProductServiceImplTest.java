@@ -8,7 +8,6 @@ import com.leathric.entity.Product;
 import com.leathric.interfaces.StorageService;
 import com.leathric.mapper.ProductMapper;
 import com.leathric.repository.CategoryRepository;
-import com.leathric.repository.ProductImageRepository;
 import com.leathric.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +23,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,8 +39,6 @@ class ProductServiceImplTest {
     private StorageService storageService;
     @Mock
     private AwsS3Properties awsS3Properties;
-    @Mock
-    private ProductImageRepository productImageRepository;
 
     @InjectMocks
     private ProductServiceImpl productService;
@@ -74,6 +70,5 @@ class ProductServiceImplTest {
 
         assertThat(response.getImageUrl()).isEqualTo("https://cdn.example.com/products/1.jpg");
         verify(storageService).upload(eq("products"), any());
-        verify(productImageRepository, atLeastOnce()).save(any());
     }
 }

@@ -3,7 +3,6 @@ package com.leathric.controllers;
 import com.leathric.dto.ApiResponse;
 import com.leathric.dto.ProductResponseDto;
 import com.leathric.dto.request.PresignedUploadUrlRequest;
-import com.leathric.dto.response.ProductImageDetailsResponse;
 import com.leathric.dto.response.ProductImageResponse;
 import com.leathric.dto.response.PresignedUploadUrlResponse;
 import com.leathric.service.ProductService;
@@ -86,31 +85,6 @@ public class ProductImageController {
                 .success(true)
                 .message("Product image deleted")
                 .data(productService.deleteProductImage(productId))
-                .build();
-    }
-
-
-    /**
-     * Fetches active image for a product from database tracking table.
-     */
-    @GetMapping("/{productId}/image")
-    public ApiResponse<ProductImageDetailsResponse> getProductImage(@PathVariable Long productId) {
-        return ApiResponse.<ProductImageDetailsResponse>builder()
-                .success(true)
-                .message("Product image fetched successfully")
-                .data(productService.getProductImage(productId))
-                .build();
-    }
-
-    /**
-     * Fetches complete image history for a product from database tracking table.
-     */
-    @GetMapping("/{productId}/images/history")
-    public ApiResponse<List<ProductImageDetailsResponse>> getProductImageHistory(@PathVariable Long productId) {
-        return ApiResponse.<List<ProductImageDetailsResponse>>builder()
-                .success(true)
-                .message("Product image history fetched successfully")
-                .data(productService.getProductImageHistory(productId))
                 .build();
     }
 

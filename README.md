@@ -92,12 +92,6 @@ Request body:
 ### List products with images
 - `GET /api/products/images`
 
-### Get active image for a product
-- `GET /api/products/{productId}/image`
-
-### Get product image history (DB tracked)
-- `GET /api/products/{productId}/images/history`
-
 ## Response Format
 
 All endpoints return the common response structure:
@@ -134,9 +128,3 @@ Run tests:
 ```bash
 mvn test
 ```
-
-
-## Image Tracking in Main Database
-
-Uploaded product images are now tracked in the `product_images` table in the primary MySQL database (`leathric-db`).
-Each record stores product association, S3 object key, URL, content type, size, active flag, and deletion reason for audit/history use-cases.

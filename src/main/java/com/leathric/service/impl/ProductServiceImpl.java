@@ -3,7 +3,6 @@ package com.leathric.service.impl;
 import com.leathric.config.AwsS3Properties;
 import com.leathric.dto.ProductDto;
 import com.leathric.dto.ProductResponseDto;
-import com.leathric.dto.response.ProductImageDetailsResponse;
 import com.leathric.dto.response.ProductImageResponse;
 import com.leathric.dto.response.PresignedUploadUrlResponse;
 import com.leathric.dto.response.StorageUploadResponse;
@@ -38,7 +37,6 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final StorageService storageService;
     private final AwsS3Properties awsS3Properties;
-    private final ProductImageRepository productImageRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -66,7 +64,7 @@ public class ProductServiceImpl implements ProductService {
 
         StorageUploadResponse upload = null;
         if (hasFile(file)) {
-            upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
+            StorageUploadResponse upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
             product.setImageUrl(upload.getFileUrl());
         }
 
@@ -94,7 +92,11 @@ public class ProductServiceImpl implements ProductService {
         productMapper.updateEntity(product, dto, category);
 
         if (hasFile(file)) {
-            replaceProductImage(product, file, "Replaced by product update");
+            if (product.getImageUrl() != null) {
+                storageService.deleteByUrl(product.getImageUrl());
+            }
+            StorageUploadResponse upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
+            product.setImageUrl(upload.getFileUrl());
         }
 
         return productMapper.toResponseDto(product);
@@ -106,7 +108,6 @@ public class ProductServiceImpl implements ProductService {
         Product product = findProductWithCategory(id);
         if (product.getImageUrl() != null) {
             storageService.deleteByUrl(product.getImageUrl());
-            markActiveImageInactive(product.getId(), "Product deleted");
         }
         productRepository.delete(product);
     }
@@ -119,14 +120,16 @@ public class ProductServiceImpl implements ProductService {
         return page.getContent();
     }
 
-    /**
-     * Uploads image and persists image-tracking record in DB.
-     */
     @Override
     @Transactional
     public ProductImageResponse uploadProductImage(Long productId, MultipartFile file) {
         Product product = findProductWithCategory(productId);
-        replaceProductImage(product, file, "Replaced by new upload");
+        if (product.getImageUrl() != null) {
+            storageService.deleteByUrl(product.getImageUrl());
+        }
+
+        StorageUploadResponse upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
+        product.setImageUrl(upload.getFileUrl());
 
         return ProductImageResponse.builder()
                 .productId(product.getId())
@@ -152,7 +155,6 @@ public class ProductServiceImpl implements ProductService {
         Product product = findProductWithCategory(productId);
         if (product.getImageUrl() != null) {
             storageService.deleteByUrl(product.getImageUrl());
-            markActiveImageInactive(productId, "Deleted by API request");
             product.setImageUrl(null);
         }
         return ProductImageResponse.builder()
@@ -172,32 +174,6 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponseDto> listProductsWithImages() {
         return productRepository.findProductsWithImages();
-    }
-
-    /**
-     * Returns current active image tracked for the product.
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public ProductImageDetailsResponse getProductImage(Long productId) {
-        findProductWithCategory(productId);
-        ProductImage image = productImageRepository
-                .findFirstByProductIdAndActiveTrueOrderByCreatedAtDesc(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("No active product image found for product id: " + productId));
-        return toProductImageDetails(image);
-    }
-
-    /**
-     * Returns image history records for the product from the main database.
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductImageDetailsResponse> getProductImageHistory(Long productId) {
-        findProductWithCategory(productId);
-        return productImageRepository.findByProductIdOrderByCreatedAtDesc(productId)
-                .stream()
-                .map(this::toProductImageDetails)
-                .toList();
     }
 
     private Product findProductWithCategory(Long id) {

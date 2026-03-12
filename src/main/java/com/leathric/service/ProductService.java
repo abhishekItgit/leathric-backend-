@@ -2,7 +2,6 @@ package com.leathric.service;
 
 import com.leathric.dto.ProductDto;
 import com.leathric.dto.ProductResponseDto;
-import com.leathric.dto.response.ProductImageDetailsResponse;
 import com.leathric.dto.response.ProductImageResponse;
 import com.leathric.dto.response.PresignedUploadUrlResponse;
 import org.springframework.data.domain.Page;
@@ -55,14 +54,4 @@ public interface ProductService {
      * Lists products that currently have image URLs.
      */
     List<ProductResponseDto> listProductsWithImages();
-
-    /**
-     * Returns current active image metadata for a product.
-     */
-    ProductImageDetailsResponse getProductImage(Long productId);
-
-    /**
-     * Returns full image history tracked in DB for a product.
-     */
-    List<ProductImageDetailsResponse> getProductImageHistory(Long productId);
 }
