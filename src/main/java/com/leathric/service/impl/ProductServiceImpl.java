@@ -3,6 +3,7 @@ package com.leathric.service.impl;
 import com.leathric.config.AwsS3Properties;
 import com.leathric.dto.ProductDto;
 import com.leathric.dto.ProductResponseDto;
+import com.leathric.dto.response.ProductImageDetailsResponse;
 import com.leathric.dto.response.ProductImageResponse;
 import com.leathric.dto.response.PresignedUploadUrlResponse;
 import com.leathric.dto.response.StorageUploadResponse;
@@ -37,6 +38,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final StorageService storageService;
     private final AwsS3Properties awsS3Properties;
+    private final ProductImageRepository productImageRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -64,7 +66,7 @@ public class ProductServiceImpl implements ProductService {
 
         StorageUploadResponse upload = null;
         if (hasFile(file)) {
-            StorageUploadResponse upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
+            upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
             product.setImageUrl(upload.getFileUrl());
         }
 
@@ -92,11 +94,7 @@ public class ProductServiceImpl implements ProductService {
         productMapper.updateEntity(product, dto, category);
 
         if (hasFile(file)) {
-            if (product.getImageUrl() != null) {
-                storageService.deleteByUrl(product.getImageUrl());
-            }
-            StorageUploadResponse upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
-            product.setImageUrl(upload.getFileUrl());
+            replaceProductImage(product, file, "REPLACED");
         }
 
         return productMapper.toResponseDto(product);
@@ -124,12 +122,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductImageResponse uploadProductImage(Long productId, MultipartFile file) {
         Product product = findProductWithCategory(productId);
-        if (product.getImageUrl() != null) {
-            storageService.deleteByUrl(product.getImageUrl());
-        }
-
-        StorageUploadResponse upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
-        product.setImageUrl(upload.getFileUrl());
+        replaceProductImage(product, file, "REPLACED");
 
         return ProductImageResponse.builder()
                 .productId(product.getId())
@@ -156,6 +149,7 @@ public class ProductServiceImpl implements ProductService {
         if (product.getImageUrl() != null) {
             storageService.deleteByUrl(product.getImageUrl());
             product.setImageUrl(null);
+            markActiveImageInactive(productId, "DELETED");
         }
         return ProductImageResponse.builder()
                 .productId(product.getId())
