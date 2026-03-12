@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -21,4 +22,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             countQuery = "SELECT COUNT(p) FROM Product p"
     )
     Page<ProductResponseDto> findAllProductResponses(Pageable pageable);
+
+    @Query("SELECT new com.leathric.dto.ProductResponseDto(p.id, p.name, p.price, p.imageUrl, c.name) " +
+            "FROM Product p LEFT JOIN p.category c WHERE p.imageUrl IS NOT NULL")
+    List<ProductResponseDto> findProductsWithImages();
 }

@@ -1,15 +1,19 @@
 package com.leathric.service.impl;
 
+import com.leathric.config.AwsS3Properties;
 import com.leathric.dto.ProductDto;
 import com.leathric.dto.ProductResponseDto;
+import com.leathric.dto.response.ProductImageResponse;
+import com.leathric.dto.response.PresignedUploadUrlResponse;
+import com.leathric.dto.response.StorageUploadResponse;
 import com.leathric.entity.Category;
 import com.leathric.entity.Product;
 import com.leathric.exception.ResourceNotFoundException;
+import com.leathric.interfaces.StorageService;
 import com.leathric.mapper.ProductMapper;
 import com.leathric.repository.CategoryRepository;
 import com.leathric.repository.ProductRepository;
 import com.leathric.service.ProductService;
-import com.leathric.storage.S3StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
@@ -28,7 +33,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
-    private final S3StorageService s3StorageService;
+    private final StorageService storageService;
+    private final AwsS3Properties awsS3Properties;
 
     @Override
     @Transactional(readOnly = true)
@@ -55,8 +61,8 @@ public class ProductServiceImpl implements ProductService {
         Product product = productMapper.toEntity(dto, category);
 
         if (hasFile(file)) {
-            String imageUrl = s3StorageService.uploadFile(file);
-            product.setImageUrl(imageUrl);
+            StorageUploadResponse upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
+            product.setImageUrl(upload.getFileUrl());
         }
 
         Product createdProduct = productRepository.save(product);
@@ -78,8 +84,11 @@ public class ProductServiceImpl implements ProductService {
         productMapper.updateEntity(product, dto, category);
 
         if (hasFile(file)) {
-            String imageUrl = s3StorageService.uploadFile(file);
-            product.setImageUrl(imageUrl);
+            if (product.getImageUrl() != null) {
+                storageService.deleteByUrl(product.getImageUrl());
+            }
+            StorageUploadResponse upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
+            product.setImageUrl(upload.getFileUrl());
         }
 
         return productMapper.toResponseDto(product);
@@ -89,6 +98,9 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public void delete(Long id) {
         Product product = findProductWithCategory(id);
+        if (product.getImageUrl() != null) {
+            storageService.deleteByUrl(product.getImageUrl());
+        }
         productRepository.delete(product);
     }
 
@@ -98,6 +110,62 @@ public class ProductServiceImpl implements ProductService {
         Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<ProductResponseDto> page = productRepository.findAllProductResponses(pageable);
         return page.getContent();
+    }
+
+    @Override
+    @Transactional
+    public ProductImageResponse uploadProductImage(Long productId, MultipartFile file) {
+        Product product = findProductWithCategory(productId);
+        if (product.getImageUrl() != null) {
+            storageService.deleteByUrl(product.getImageUrl());
+        }
+
+        StorageUploadResponse upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
+        product.setImageUrl(upload.getFileUrl());
+
+        return ProductImageResponse.builder()
+                .productId(product.getId())
+                .imageUrl(product.getImageUrl())
+                .message("Product image uploaded successfully")
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PresignedUploadUrlResponse generatePresignedUploadUrl(String fileName, String contentType) {
+        return storageService.generatePresignedUploadUrl(
+                awsS3Properties.getProductImagePrefix(),
+                fileName,
+                contentType,
+                Duration.ofSeconds(awsS3Properties.getPresignedUrlExpirationSeconds())
+        );
+    }
+
+    @Override
+    @Transactional
+    public ProductImageResponse deleteProductImage(Long productId) {
+        Product product = findProductWithCategory(productId);
+        if (product.getImageUrl() != null) {
+            storageService.deleteByUrl(product.getImageUrl());
+            product.setImageUrl(null);
+        }
+        return ProductImageResponse.builder()
+                .productId(product.getId())
+                .imageUrl(null)
+                .message("Product image deleted successfully")
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ProductImageResponse updateProductImage(Long productId, MultipartFile file) {
+        return uploadProductImage(productId, file);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponseDto> listProductsWithImages() {
+        return productRepository.findProductsWithImages();
     }
 
     private Product findProductWithCategory(Long id) {
