@@ -8,10 +8,12 @@ import com.leathric.dto.response.PresignedUploadUrlResponse;
 import com.leathric.dto.response.StorageUploadResponse;
 import com.leathric.entity.Category;
 import com.leathric.entity.Product;
+import com.leathric.entity.ProductImage;
 import com.leathric.exception.ResourceNotFoundException;
 import com.leathric.interfaces.StorageService;
 import com.leathric.mapper.ProductMapper;
 import com.leathric.repository.CategoryRepository;
+import com.leathric.repository.ProductImageRepository;
 import com.leathric.repository.ProductRepository;
 import com.leathric.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -60,12 +62,18 @@ public class ProductServiceImpl implements ProductService {
         Category category = findCategory(dto.getCategoryId());
         Product product = productMapper.toEntity(dto, category);
 
+        StorageUploadResponse upload = null;
         if (hasFile(file)) {
             StorageUploadResponse upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
             product.setImageUrl(upload.getFileUrl());
         }
 
         Product createdProduct = productRepository.save(product);
+
+        if (upload != null) {
+            trackImageRecord(createdProduct, file, upload, true, null);
+        }
+
         return productMapper.toResponseDto(findProductWithCategory(createdProduct.getId()));
     }
 
@@ -180,5 +188,57 @@ public class ProductServiceImpl implements ProductService {
 
     private boolean hasFile(MultipartFile file) {
         return file != null && !file.isEmpty();
+    }
+
+    private void replaceProductImage(Product product, MultipartFile file, String reason) {
+        if (product.getImageUrl() != null) {
+            storageService.deleteByUrl(product.getImageUrl());
+            markActiveImageInactive(product.getId(), reason);
+        }
+
+        StorageUploadResponse upload = storageService.upload(awsS3Properties.getProductImagePrefix(), file);
+        product.setImageUrl(upload.getFileUrl());
+        trackImageRecord(product, file, upload, true, null);
+    }
+
+    private void markActiveImageInactive(Long productId, String reason) {
+        productImageRepository.findFirstByProductIdAndActiveTrueOrderByCreatedAtDesc(productId)
+                .ifPresent(image -> {
+                    image.setActive(false);
+                    image.setDeletedReason(reason);
+                    productImageRepository.save(image);
+                });
+    }
+
+    private void trackImageRecord(Product product,
+                                  MultipartFile file,
+                                  StorageUploadResponse upload,
+                                  boolean active,
+                                  String deletedReason) {
+        ProductImage image = ProductImage.builder()
+                .product(product)
+                .objectKey(upload.getKey())
+                .imageUrl(upload.getFileUrl())
+                .contentType(file.getContentType())
+                .fileSizeBytes(file.getSize())
+                .active(active)
+                .deletedReason(deletedReason)
+                .build();
+        productImageRepository.save(image);
+    }
+
+    private ProductImageDetailsResponse toProductImageDetails(ProductImage image) {
+        return ProductImageDetailsResponse.builder()
+                .imageId(image.getId())
+                .productId(image.getProduct().getId())
+                .objectKey(image.getObjectKey())
+                .imageUrl(image.getImageUrl())
+                .contentType(image.getContentType())
+                .fileSizeBytes(image.getFileSizeBytes())
+                .active(image.isActive())
+                .deletedReason(image.getDeletedReason())
+                .createdAt(image.getCreatedAt())
+                .updatedAt(image.getUpdatedAt())
+                .build();
     }
 }
