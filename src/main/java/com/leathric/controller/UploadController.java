@@ -1,34 +1,40 @@
 package com.leathric.controller;
 
 import com.leathric.dto.ApiResponse;
-import com.leathric.storage.FileStorageService;
+import com.leathric.dto.response.ProductImageResponse;
+import com.leathric.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Map;
-
+/**
+ * Backward-compatible image upload controller.
+ */
 @RestController
 @RequestMapping("/api/admin/products")
 @RequiredArgsConstructor
 public class UploadController {
 
-    private final FileStorageService fileStorageService;
+    private final ProductService productService;
 
-    @PostMapping("/upload-image")
+    /**
+     * Uploads product image to S3 and updates product image URL.
+     */
+    @PostMapping("/{productId}/upload-image")
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
-        // Controller handles HTTP concerns only; storage logic is delegated to service layer.
-        String imageUrl = fileStorageService.storeProductImage(file);
-
-        return ApiResponse.<Map<String, String>>builder()
+    public ApiResponse<ProductImageResponse> uploadImage(
+            @PathVariable Long productId,
+            @RequestPart("file") MultipartFile file
+    ) {
+        return ApiResponse.<ProductImageResponse>builder()
                 .success(true)
                 .message("Image uploaded successfully")
-                .data(Map.of("imageUrl", imageUrl))
+                .data(productService.uploadProductImage(productId, file))
                 .build();
     }
 }

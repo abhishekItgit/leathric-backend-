@@ -1,102 +1,130 @@
 # Leathric Backend
 
-Production-ready Spring Boot backend for Leathric leather ecommerce platform.
+Production-grade Spring Boot backend for Leathric ecommerce, with cleanly separated API, service, storage strategy, and exception layers.
 
-## Tech Stack
-- Java 17
-- Spring Boot 3
-- Maven
-- MySQL
-- Spring Data JPA
-- Spring Security + JWT
-- Lombok
-- Jakarta Validation
+## Enhanced Architecture
 
-## Package Structure
-```
+```text
 com.leathric
- ├── config
- ├── controller
- ├── dto
- ├── entity
- ├── repository
- ├── service
- ├── security
- ├── exception
- └── util
+├── config
+│   ├── AwsS3Properties.java
+│   └── S3Config.java
+├── controller
+│   ├── ProductController.java
+│   └── UploadController.java
+├── controllers
+│   └── ProductImageController.java
+├── dto
+│   ├── ProductDto.java
+│   ├── ProductResponseDto.java
+│   ├── request
+│   │   └── PresignedUploadUrlRequest.java
+│   └── response
+│       ├── PresignedUploadUrlResponse.java
+│       ├── ProductImageResponse.java
+│       └── StorageUploadResponse.java
+├── exception
+│   ├── GlobalExceptionHandler.java
+│   └── StorageOperationException.java
+├── interfaces
+│   └── StorageService.java
+├── mapper
+│   └── ProductMapper.java
+├── repository
+│   └── ProductRepository.java
+├── service
+│   ├── ProductService.java
+│   └── impl
+│       └── ProductServiceImpl.java
+├── services
+│   └── storage
+│       └── S3StorageService.java
+└── strategy
+    └── StorageStrategy.java
 ```
 
-## Entity Relationship Overview
-- **User** ⟷ **Role**: many-to-many
-- **User** ⟷ **Cart**: one-to-one
-- **Cart** ⟷ **CartItem**: one-to-many
-- **CartItem** ⟶ **Product**: many-to-one
-- **Product** ⟶ **Category**: many-to-one
-- **User** ⟷ **Order**: one-to-many
-- **Order** ⟷ **OrderItem**: one-to-many
-- **OrderItem** ⟶ **Product**: many-to-one
-- **Review** connects **User** and **Product** with one review per user+product
+## S3 Capabilities
 
-## Security
-- `/api/auth/register` and `/api/auth/login` are public.
-- Product and category reads are public.
-- Mutations on products/categories and order status update require `ADMIN`.
-- Cart and order placement/history require authenticated users.
-- JWT stateless authentication with BCrypt password hashing.
+The storage layer now supports both patterns:
 
-## Run locally
-1. Create MySQL database or allow auto-create from URL.
-2. Update credentials and JWT secret in `src/main/resources/application.yml`.
-3. Run:
-   ```bash
-   mvn spring-boot:run
-   ```
+1. **Direct upload/delete/get URL** using `S3Client`.
+2. **Pre-signed upload URL generation** using `S3Presigner`.
 
-## APIs
-### Auth
-- `POST /api/auth/register`
-- `POST /api/auth/login`
+## Configuration Properties
 
-### Product
-- `GET /api/products`
-- `GET /api/products/{id}`
-- `POST /api/products` (ADMIN)
-- `PUT /api/products/{id}` (ADMIN)
-- `DELETE /api/products/{id}` (ADMIN)
+S3 values are externalized via typed properties (`@ConfigurationProperties`):
 
-### Category
-- `GET /api/categories`
-- `GET /api/categories/{id}`
-- `POST /api/categories` (ADMIN)
-- `PUT /api/categories/{id}` (ADMIN)
-- `DELETE /api/categories/{id}` (ADMIN)
+```yaml
+app:
+  aws:
+    s3:
+      access-key: ${AWS_ACCESS_KEY_ID:}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:}
+      region: ${AWS_REGION:ap-south-1}
+      bucket: ${AWS_S3_BUCKET:}
+      product-image-prefix: ${AWS_S3_PRODUCT_PREFIX:products}
+      presigned-url-expiration-seconds: ${AWS_S3_PRESIGNED_EXPIRATION_SECONDS:900}
+      max-file-size-bytes: ${AWS_S3_MAX_FILE_SIZE_BYTES:5242880}
+```
 
-### Cart
-- `GET /api/cart`
-- `POST /api/cart/items`
-- `PUT /api/cart/items/{itemId}`
-- `DELETE /api/cart/items/{itemId}`
+## Product Image APIs
 
-### Order
-- `POST /api/orders`
-- `GET /api/orders`
-- `PATCH /api/orders/{orderId}/status` (ADMIN)
+### Upload image and save URL
+- `POST /api/products/{productId}/image` (ADMIN)
 
-## Nginx Reverse Proxy (important)
-If you proxy backend routes under `/api/`, keep the `/api` prefix when forwarding to Spring Boot.
+### Get pre-signed upload URL
+- `POST /api/products/images/presigned-upload-url` (ADMIN)
 
-Use:
-```nginx
-location /api/ {
-    proxy_pass http://backend:8080;
+Request body:
+```json
+{
+  "fileName": "shoe.jpg",
+  "contentType": "image/jpeg"
 }
 ```
 
-Avoid:
-```nginx
-location /api/ {
-    proxy_pass http://backend:8080/;
+### Update image
+- `PUT /api/products/{productId}/image` (ADMIN)
+
+### Delete image
+- `DELETE /api/products/{productId}/image` (ADMIN)
+
+### List products with images
+- `GET /api/products/images`
+
+## Response Format
+
+All endpoints return the common response structure:
+
+```json
+{
+  "success": true,
+  "message": "Product image uploaded",
+  "data": {
+    "productId": 1,
+    "imageUrl": "https://...",
+    "message": "Product image uploaded successfully"
+  }
 }
 ```
 
-The trailing slash strips `/api` and can break mappings/security (for example `/api/categories` becoming `/categories`).
+## Exception Handling
+
+`GlobalExceptionHandler` now standardizes responses for:
+- `ResourceNotFoundException`
+- `BadRequestException`
+- `StorageOperationException`
+- Validation errors
+- Generic exceptions
+
+## Unit Tests (Mockito Samples)
+
+Included examples:
+- `ProductServiceImplTest` for service orchestration with storage + repository mocks.
+- `S3StorageServiceTest` for pre-signed URL generation behavior.
+
+Run tests:
+
+```bash
+mvn test
+```
