@@ -1,11 +1,10 @@
 spring:
   datasource:
-    url: jdbc:mysql://database-1.c7cokmqwit9z.ap-south-1.rds.amazonaws.com:3306/leathric_db?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=60000&socketTimeout=60000    #username: ${DB_USERNAME}
-   # username: admin
-     username:${DB_USERNAME}
-    password: ${DB_PASSWORD}
-   # password: Zxcvbnm2026Zxcvbnm
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://database-1.c7cokmqwit9z.ap-south-1.rds.amazonaws.com:3306/leathric_db
+   # username: ${DB_USERNAME}
+    username: admin
+   # password: ${DB_PASSWORD}
+    password: Zxcvbnm2026Zxcvbnm
 
   jpa:
     hibernate:
@@ -28,7 +27,7 @@ spring:
       max-request-size: 10MB
 
 server:
-  port: 8080
+  port: 8082
 
 security:
   jwt:
