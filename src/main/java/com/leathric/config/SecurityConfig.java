@@ -29,7 +29,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Value("${app.cors.allowed-origin-patterns:http://localhost:*,http://127.0.0.1:*,http://localhost}")
+    @Value("${app.cors.allowed-origin-patterns:http://localhost:*,http://127.0.0.1:*,http://localhost,http://13.232.236.32}")
     private List<String> allowedOriginPatterns;
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
