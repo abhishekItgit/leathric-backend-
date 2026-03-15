@@ -67,7 +67,7 @@ public class SecurityConfig {
         // Allow all request headers sent by the React client (including Authorization).
         configuration.setAllowedHeaders(List.of("*"));
         // Needed for cookie-based flows and authorized cross-origin requests.
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         // Apply CORS rules to every endpoint.
