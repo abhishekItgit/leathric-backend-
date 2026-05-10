@@ -1,7 +1,9 @@
 package com.leathric.controller;
 
 import com.leathric.dto.ApiResponse;
+import com.leathric.dto.request.ProductImageUploadRequest;
 import com.leathric.dto.response.ProductImageResponse;
+import com.leathric.entity.ImageType;
 import com.leathric.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,7 +36,15 @@ public class UploadController {
         return ApiResponse.<ProductImageResponse>builder()
                 .success(true)
                 .message("Image uploaded successfully")
-                .data(productService.uploadProductImage(productId, file))
+                .data(productService.uploadProductImage(productId, file, defaultRequest()))
                 .build();
+    }
+
+    private ProductImageUploadRequest defaultRequest() {
+        ProductImageUploadRequest request = new ProductImageUploadRequest();
+        request.setImageType(ImageType.OTHER);
+        request.setDisplayOrder(0);
+        request.setPrimary(true);
+        return request;
     }
 }

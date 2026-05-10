@@ -29,6 +29,19 @@ public class ProductImage extends BaseEntity {
     @Column(name = "image_url", nullable = false, length = 1024)
     private String imageUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "image_type", nullable = false, length = 40)
+    private ImageType imageType;
+
+    @Column(name = "alt_text", length = 255)
+    private String altText;
+
+    @Column(name = "display_order", nullable = false)
+    private Integer displayOrder;
+
+    @Column(name = "is_primary", nullable = false)
+    private boolean primary;
+
     @Column(name = "content_type", length = 120)
     private String contentType;
 
