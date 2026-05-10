@@ -4,7 +4,10 @@ import com.leathric.dto.ProductDto;
 import com.leathric.dto.ProductResponseDto;
 import com.leathric.entity.Category;
 import com.leathric.entity.Product;
+import com.leathric.entity.ProductImage;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class ProductMapper {
@@ -30,14 +33,29 @@ public class ProductMapper {
     }
 
     public ProductResponseDto toResponseDto(Product product) {
-        Category category = product.getCategory();
+        return toResponseDto(product, List.of());
+    }
 
+    public ProductResponseDto toResponseDto(Product product, List<ProductImage> images) {
+        Category category = product.getCategory();
         return ProductResponseDto.builder()
                 .id(product.getId())
                 .name(product.getName())
                 .price(product.getPrice())
                 .imageUrl(product.getImageUrl())
                 .categoryName(category != null ? category.getName() : null)
+                .images(images.stream().map(this::toImageDto).toList())
+                .build();
+    }
+
+    private ProductResponseDto.ProductImageResponse toImageDto(ProductImage image) {
+        return ProductResponseDto.ProductImageResponse.builder()
+                .imageId(image.getId())
+                .imageUrl(image.getImageUrl())
+                .imageType(image.getImageType().name())
+                .altText(image.getAltText())
+                .displayOrder(image.getDisplayOrder())
+                .primary(image.isPrimary())
                 .build();
     }
 }
